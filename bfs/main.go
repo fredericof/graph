@@ -11,6 +11,7 @@ type Vertex struct {
 	Value    string
 	Explored bool
 	IsRoot   bool
+	Length   uint16
 }
 
 type Edge struct {
@@ -32,7 +33,7 @@ func main() {
 	e3 := NewEdge("E3", vc, vd)
 	e4 := NewEdge("E4", vb, vd)
 	e5 := NewEdge("E5", vaRoot, ve)
-	e6 := NewEdge("E6", ve, vd)
+	e6 := NewEdge("E6", vf, vd)
 	e7 := NewEdge("E7", ve, vf)
 
 	vertexList := []*Vertex{vaRoot, vb, vc, vd, ve, vf}
@@ -46,10 +47,16 @@ func main() {
 	queue.Enqueue(vaRoot)
 
 	for len(queue.Elements) != 0 {
-		for _, vertex := range findEdgesByVertex(queue.Dequeue(), edgeList) {
-			if !vertex.Explored {
-				vertex.Explored = true
-				queue.Enqueue(vertex)
+		vertexV := queue.Dequeue()
+
+		// Edge has two vertices (V,W) same (W,V) for undirected graphs
+		for _, vertexW := range findEdgesByVertex(vertexV, edgeList) {
+			if !vertexW.Explored {
+				vertexW.Explored = true
+				vertexW.Length = vertexV.Length + 1
+				queue.Enqueue(vertexW)
+				fmt.Print(vertexW.Value + "-")
+				fmt.Println(vertexW.Length)
 			}
 		}
 	}
@@ -71,8 +78,10 @@ func initOnlyRootVertexAsExplored(vertexList []*Vertex) {
 	for i := 0; i < len(vertexList); i++ {
 		if vertexList[i].IsRoot {
 			vertexList[i].Explored = true
-			return
+			vertexList[i].Length = 0
+			continue
 		}
+		vertexList[i].Length = ^uint16(0)
 	}
 }
 
