@@ -10,8 +10,8 @@ type Queue struct {
 type Vertex struct {
 	Value    string
 	Explored bool
-	IsRoot   bool
 	Length   uint16
+	NumCC    uint16
 }
 
 type Edge struct {
@@ -21,30 +21,55 @@ type Edge struct {
 }
 
 func main() {
-	vaRoot := NewVertex("A", true)
-	vb := NewVertex("B", false)
-	vc := NewVertex("C", false)
-	vd := NewVertex("D", false)
-	ve := NewVertex("E", false)
-	vf := NewVertex("F", false)
+	va := NewVertex("A")
+	vb := NewVertex("B")
+	vc := NewVertex("C")
+	vd := NewVertex("D")
+	ve := NewVertex("E")
+	vf := NewVertex("F")
 
-	e1 := NewEdge("E1", vaRoot, vb)
+	e1 := NewEdge("E1", va, vb)
 	e2 := NewEdge("E2", vb, vc)
 	e3 := NewEdge("E3", vc, vd)
 	e4 := NewEdge("E4", vb, vd)
-	e5 := NewEdge("E5", vaRoot, ve)
+	e5 := NewEdge("E5", va, ve)
 	e6 := NewEdge("E6", vf, vd)
 	e7 := NewEdge("E7", ve, vf)
 
-	vertexList := []*Vertex{vaRoot, vb, vc, vd, ve, vf}
-	edgeList := []*Edge{e1, e2, e3, e4, e5, e6, e7}
+	vg := NewVertex("G")
+	vh := NewVertex("H")
 
-	// Mark root vertex as explored and all others as unexplored
-	initOnlyRootVertexAsExplored(vertexList)
+	e8 := NewEdge("E8", vg, vh)
 
+	vertexList := []*Vertex{va, vb, vc, vd, ve, vf, vg}
+	edgeList := []*Edge{e1, e2, e3, e4, e5, e6, e7, e8}
+
+	// Connected Components
+	numCC := uint16(0)
+
+	for _, vertex := range vertexList {
+		if !vertex.Explored {
+			// Init vertex like a root
+			vertex.Explored = true
+			vertex.Length = 0
+
+			// Increment Connected Component
+			numCC++
+
+			// Call bfs
+			bfs(vertexList, edgeList, vertex, numCC)
+
+			fmt.Println("-------------------")
+		}
+	}
+}
+
+func bfs(vertexList []*Vertex, edgeList []*Edge, rootVertex *Vertex, numCC uint16) {
 	// Initilize Queue with Root Vertex
 	queue := Queue{Size: len(vertexList)}
-	queue.Enqueue(vaRoot)
+	queue.Enqueue(rootVertex)
+
+	fmt.Println(fmt.Sprint(rootVertex.Value, " - ", rootVertex.Length, " | numCC: ", rootVertex.NumCC))
 
 	for len(queue.Elements) != 0 {
 		vertexV := queue.Dequeue()
@@ -54,9 +79,9 @@ func main() {
 			if !vertexW.Explored {
 				vertexW.Explored = true
 				vertexW.Length = vertexV.Length + 1
+				vertexW.NumCC = numCC
 				queue.Enqueue(vertexW)
-				fmt.Print(vertexW.Value + "-")
-				fmt.Println(vertexW.Length)
+				fmt.Println(fmt.Sprint(vertexW.Value, " - ", vertexW.Length, " | numCC: ", vertexW.NumCC))
 			}
 		}
 	}
@@ -74,17 +99,6 @@ func findEdgesByVertex(vertex *Vertex, edgeList []*Edge) []*Vertex {
 	return list
 }
 
-func initOnlyRootVertexAsExplored(vertexList []*Vertex) {
-	for i := 0; i < len(vertexList); i++ {
-		if vertexList[i].IsRoot {
-			vertexList[i].Explored = true
-			vertexList[i].Length = 0
-			continue
-		}
-		vertexList[i].Length = ^uint16(0)
-	}
-}
-
 func NewEdge(name string, vertexA *Vertex, vertexB *Vertex) *Edge {
 	return &Edge{
 		Name:    name,
@@ -93,10 +107,12 @@ func NewEdge(name string, vertexA *Vertex, vertexB *Vertex) *Edge {
 	}
 }
 
-func NewVertex(value string, isRoot bool) *Vertex {
+func NewVertex(value string) *Vertex {
 	return &Vertex{
-		Value:  value,
-		IsRoot: isRoot,
+		Value:    value,
+		Explored: false,
+		Length:   ^uint16(0),
+		NumCC:    0,
 	}
 }
 
