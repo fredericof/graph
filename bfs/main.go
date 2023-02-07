@@ -91,8 +91,10 @@ func findEdgesByVertex(vertex *Vertex, edgeList []*Edge) []*Vertex {
 	list := []*Vertex{}
 
 	for _, edge := range edgeList {
-		if vertex == edge.VertexA || vertex == edge.VertexB {
+		if vertex == edge.VertexA {
 			list = append(list, edge.VertexB)
+		} else if vertex == edge.VertexB {
+			list = append(list, edge.VertexA)
 		}
 	}
 

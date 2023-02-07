@@ -35,13 +35,35 @@ func main() {
 	e6 := NewEdge("E6", vf, vd)
 	e7 := NewEdge("E7", ve, vf)
 	e8 := NewEdge("E8", vg, vh)
-	e9 := NewEdge("E9", vf, vh)
+	e9 := NewEdge("E9", vh, vf)
 
 	vertexList := []*Vertex{va, vb, vc, vd, ve, vf, vg, vh}
 	edgeList := []*Edge{e1, e2, e3, e4, e5, e6, e7, e8, e9}
 
+	iterativeDfs(va, edgeList)
+	//recursiveDfs(va, edgeList)
+
+	fmt.Println("----------------------------")
+
+	for _, vertex := range vertexList {
+		fmt.Println(fmt.Sprint(vertex.Value, " - Explored: ", vertex.Explored))
+	}
+}
+
+func recursiveDfs(vertex *Vertex, edgeList []*Edge) {
+	vertex.Explored = true
+	for _, vertexW := range findEdgesByVertex(vertex, edgeList) {
+		if !vertexW.Explored {
+			fmt.Println(fmt.Sprint(vertexW.Value))
+			recursiveDfs(vertexW, edgeList)
+		}
+	}
+}
+
+// Iterative Depth-first search
+func iterativeDfs(vertex *Vertex, edgeList []*Edge) {
 	var stack Stack
-	stack.Push(va)
+	stack.Push(vertex)
 
 	for !stack.IsEmpty() {
 		vertexV, _ := stack.Pop()
@@ -51,19 +73,10 @@ func main() {
 
 			for _, vertexW := range findEdgesByVertex(vertexV, edgeList) {
 				stack.Push(vertexW)
-				//fmt.Println(fmt.Sprint(vertexW.Value))
+				//fmt.Println(fmt.Sprint(vertexW.Value, "-", vertexW.Explored))
 			}
 		}
 	}
-
-	for _, vertex := range vertexList {
-		fmt.Println(fmt.Sprint(vertex.Value, " - Explored: ", vertex.Explored))
-	}
-}
-
-// Iterative Depth-first search
-func dfs() {
-
 }
 
 func findEdgesByVertex(vertex *Vertex, edgeList []*Edge) []*Vertex {
