@@ -1,17 +1,23 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
+
+var CurLabel int
+var NumScc int
 
 type Graph struct {
-	V        []*Vertex
-	E        []*Edge
-	CurLabel int
+	V []*Vertex
+	E []*Edge
 }
 
 type Vertex struct {
 	Name     string
 	Explored bool
 	Position int
+	SCC      int
 }
 
 type Edge struct {
@@ -64,18 +70,17 @@ func main() {
 	edgeList := []*Edge{e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12, e13, e14, e15, e16, e17, e18}
 	graph := NewGraph(vertexList, edgeList)
 
-	TopoSort(graph)
+	kosarajo(graph)
 
 	for _, vertex := range graph.V {
-		fmt.Printf("%s - %d \n", vertex.Name, vertex.Position)
+		fmt.Printf("%s - Position: %d - SSC: %d \n", vertex.Name, vertex.Position, vertex.SCC)
 	}
 }
 
 func NewGraph(vertexList []*Vertex, edgeList []*Edge) *Graph {
 	return &Graph{
-		V:        vertexList,
-		E:        edgeList,
-		CurLabel: len(vertexList),
+		V: vertexList,
+		E: edgeList,
 	}
 }
 
@@ -92,6 +97,7 @@ func NewVertex(Name string) *Vertex {
 		Name:     Name,
 		Explored: false,
 		Position: 0,
+		SCC:      0,
 	}
 }
 
@@ -101,8 +107,49 @@ func (g *Graph) makeAllUnexplored() {
 	}
 }
 
+func kosarajo(graph *Graph) {
+	reverseGraph(graph)
+	graph.makeAllUnexplored()
+
+	TopoSort(graph)
+
+	graph.makeAllUnexplored()
+
+	NumScc = 0
+
+	// Vertex list Sorted by increasing order
+	sort.Slice(graph.V[:], func(i, j int) bool {
+		return graph.V[i].Position < graph.V[j].Position
+	})
+
+	for _, vertex := range graph.V {
+		if !vertex.Explored {
+			NumScc = NumScc + 1
+			dfsScc(graph, vertex)
+		}
+	}
+}
+
+func dfsScc(graph *Graph, sourceVertex *Vertex) {
+	sourceVertex.Explored = true
+	sourceVertex.SCC = NumScc
+
+	for _, edge := range incomingEdgesFromVertex(graph.E, sourceVertex) {
+		if !edge.VertexA.Explored {
+			dfsScc(graph, edge.VertexA)
+		}
+	}
+}
+
+func reverseGraph(graph *Graph) {
+	for _, edge := range graph.E {
+		edge.VertexA, edge.VertexB = edge.VertexB, edge.VertexA
+	}
+}
+
 func TopoSort(graph *Graph) {
 	graph.makeAllUnexplored()
+	CurLabel = len(graph.V)
 
 	for _, vertex := range graph.V {
 		if !vertex.Explored {
@@ -120,8 +167,8 @@ func dfsTopo(graph *Graph, sourceVertex *Vertex) {
 		}
 	}
 
-	sourceVertex.Position = graph.CurLabel
-	graph.CurLabel--
+	sourceVertex.Position = CurLabel
+	CurLabel = CurLabel - 1
 }
 
 func outgoingEdgesFromVertex(edgeList []*Edge, sourceVertex *Vertex) []*Edge {
@@ -129,6 +176,18 @@ func outgoingEdgesFromVertex(edgeList []*Edge, sourceVertex *Vertex) []*Edge {
 
 	for _, edge := range edgeList {
 		if sourceVertex == edge.VertexA {
+			list = append(list, edge)
+		}
+	}
+
+	return list
+}
+
+func incomingEdgesFromVertex(edgeList []*Edge, sourceVertex *Vertex) []*Edge {
+	list := []*Edge{}
+
+	for _, edge := range edgeList {
+		if sourceVertex == edge.VertexB {
 			list = append(list, edge)
 		}
 	}
